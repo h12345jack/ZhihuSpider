@@ -1,0 +1,16 @@
+.DS_Store
+*.pyc
+zhihuSpider/topic_data
+*.log
+!2017-03-18_topicSpider.log
+*.html
+*.jl
+*.json
+*.yaml
+
+*.data
+*.txt
+!requirements.txt
+*.doc
+*.rs
+proxy_pool
