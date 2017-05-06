@@ -1,0 +1,11 @@
+*.html
+*.rar
+*.log
+*.json
+*.txt
+*.doc
+.idea/
+*.pyc
+*.xlsx
+
+./coword/data

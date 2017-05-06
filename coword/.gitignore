@@ -1,0 +1,6 @@
+*.jl
+!example.jl
+*.txt
+*.xlsx
+*.sav
+*.pyc
