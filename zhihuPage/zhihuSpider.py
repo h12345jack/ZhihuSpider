@@ -17,8 +17,8 @@ from lxml import etree
 
 from config.Config import URL
 from config.Config import DATA_DIR
-from config.Config import HEADERS,TIMEOUT
-from config.Config import COOKIES_RAW_PATH,COOKIES_PATH,XSRF_PATH
+from config.Config import HEADERS, TIMEOUT
+from config.Config import COOKIES_RAW_PATH, COOKIES_PATH, XSRF_PATH
 from config.Config import TOPIC_ID_LIST
 
 
@@ -28,7 +28,7 @@ NOW = time.strftime("%Y-%m-%d", time.localtime())
 TIME_SLEEP = 2
 RETRY = 5
 
-ERROR_DIR = os.path.join(CUR_DIR,'error')
+ERROR_DIR = os.path.join(CUR_DIR, 'error')
 if not os.path.exists(ERROR_DIR):
     os.mkdir(ERROR_DIR)
 
@@ -76,7 +76,7 @@ class ZhihuSpider(object):
     def login_method1(self):
         xsrf = self._get_xsrf(url=self.url_homepage)
         self.payload_login['_xsrf'] = xsrf
-        with open(_XSRF_GLOBAL_FIELNAME,'w') as f:
+        with open(_XSRF_GLOBAL_FIELNAME, 'w') as f:
             f.write(xsrf)
         try:
             self.spider.post(self.url_login,
@@ -90,9 +90,9 @@ class ZhihuSpider(object):
     def login_method2(self):
         self.clean_cookies2cookies_data()
         with open(COOKIES_PATH) as f:
-            cookies=json.loads(f.read())
+            cookies = json.loads(f.read())
             requests.utils.add_dict_to_cookiejar(self.spider.cookies, cookies)
-            with open(XSRF_PATH,'w') as f:
+            with open(XSRF_PATH, 'w') as f:
                 f.write(cookies['_xsrf'])
         return self._test_login()
 
@@ -108,20 +108,19 @@ class ZhihuSpider(object):
             sys.exit(-1)
 
 
-    
     def clean_cookies2cookies_data(self):
         """make cookies raw to a json
         """
         with open(COOKIES_RAW_PATH) as f:
-            line=f.readline()
-            line=line.split(';')
-            cookies=dict()
+            line = f.readline()
+            line = line.split(';')
+            cookies = dict()
             for i in line:
-                index=i.find('=')
-                value=i[index+1:].strip()
-                value=value.replace('"','')
-                cookies[i[:index].strip()]=value
-            rs_f=file(COOKIES_PATH,'w')
+                index = i.find('=')
+                value = i[index+1:].strip()
+                value = value.replace('"', '')
+                cookies[i[:index].strip()] = value
+            rs_f = file(COOKIES_PATH, 'w')
             rs_f.write(json.dumps(cookies))
 
     def _test_login(self):
@@ -160,22 +159,21 @@ class ZhihuSpider(object):
         self.login()
         self.crawl_by_layer()
 
-def spider_get(spider,url,retry):
+def spider_get(spider, url, retry):
 
     if retry > 0:
         try:
-            res = spider.get(url,headers = HEADERS)
+            res = spider.get(url, headers=HEADERS)
             content = res.content
-        except(requests.packages.urllib3.exceptions.ProtocolError,
+        except(requests.packages.urllib3.exceptions.ProtocolError,\
               requests.exceptions.ConnectionError):
-            if retry -1 >0:
-                print('ConnectionError: 断开连接!进行重试,还剩' + str(
-                            retry - 1) + '次重试机会')
+            if retry-1 > 0:
+                print('ConnectionError: 断开连接!进行重试,还剩' + str(retry - 1) + '次重试机会')
             elif retry - 1 == 0:
                 print('ConnectionError: 断开连接!进行最后一次重试')
             time.sleep(5)
 
-            return spider_get(spider,url,retry - 1)
+            return spider_get(spider, url, retry - 1)
         else:
             return content
     else:
@@ -184,26 +182,25 @@ def spider_get(spider,url,retry):
 
 
 
-def topic2question(spider,url):
-    topic_id=re.search('[0-9]+',url).group()
-    rs_f = file(os.path.join(DATA_DIR,topic_id+'.txt'),'w')
-    cur_page=0
-    next_url=url
+def topic2question(spider, url):
+    topic_id = re.search('[0-9]+', url).group()
+    rs_f = file(os.path.join(DATA_DIR, topic_id+'.txt'), 'w')
+    cur_page = 0
+    next_url = url
 
     for tmp in range(51):
         time.sleep(TIME_SLEEP)
 
-        content=spider_get(spider,next_url,retry= RETRY)
-
-        etree=lxml.html.fromstring(content)
-        link_xpath='//a[@class="question_link"]/@href'
-        link=etree.xpath(link_xpath)
-        link2=set(link)
+        content = spider_get(spider, next_url, retry=RETRY)
+        etree = lxml.html.fromstring(content)
+        link_xpath = '//a[@class="question_link"]/@href'
+        link = etree.xpath(link_xpath)
+        link2 = set(link)
         for i in link2:
             rs_f.write("http://zhihu.com"+i+'\n')
         #next page
-        next_page_link_xpath='//div[@class="zm-invite-pager"]/span/a/@href'
-        next_page_link=etree.xpath(next_page_link_xpath)
+        next_page_link_xpath ='//div[@class="zm-invite-pager"]/span/a/@href'
+        next_page_link =etree.xpath(next_page_link_xpath)
         if len(next_page_link)==0:
             with open(os.path.join(ERROR_DIR,topic_id+'_'+str(cur_page)+".txt"),'w') as f:
                 f.write(content)

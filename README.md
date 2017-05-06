@@ -32,3 +32,7 @@ zhihuPage，改换了一种config的表示方法
 登录抓取log信息
 
 
+## 关于登陆信息
+使用cookies
+![](http://wx4.sinaimg.cn/mw690/006C73MUly1ffaqor57xbj31hc0qd7my.jpg)
+
