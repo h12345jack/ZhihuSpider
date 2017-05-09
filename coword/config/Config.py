@@ -34,3 +34,10 @@ MYSQL_CONFIG ={
     "PASSWORD":'admin',
     'CHARSET': 'utf8'
 }
+
+
+STOPWORD = "./data/stopword.txt"
+
+QUESTION_TOPIC = './data/question/question_topic.txt'
+
+TOPICDICT = "./data/dict.txt"
