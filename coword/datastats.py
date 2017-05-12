@@ -13,8 +13,9 @@ from config.Config import QUESTION_DATA_DIR, ANSWER_DATA_DIR
 from config.Config import STOPWORD, TOPICDICT, QUESTION_TOPIC
 import MySQLdb
 
+question_file = "zhihu_question.jl"
 
-
+answer_file = "zhihu_answer.jl"
 
 
 class Answer(object):
@@ -130,25 +131,55 @@ def word_cut(sentence):
 
 
 def question_dict_gen():
+    '''
+    读取question_topic的数据作为默认词典
+    '''
     f = codecs.open(QUESTION_TOPIC, 'r', 'utf8')
     question_dict = set()
     for line in f.readlines():
         word_list = line.strip().split(',')
         for word in word_list:
-            w1 = re.findall(u"(.*)(（.*）)",word)
-            if len(w1)>0:print w1
+            # 优步（Uber）
+            w1 = re.findall(u"(.*)\s*（(.*)）",word)
+            if len(w1) > 0:
+                for i in w1[0]:
+                    if i not in question_dict:
+                        print i,"w1"
+                        question_dict.add(i)
+            else:
+                w2 = re.findall(r'(.*)\s*\((.*)\)',word)
+                if len(w2) > 0: 
+                    for i in w2[0]:
+                        print i,"w2"
+                        question_dict.add(i)
+                else:
+                    w3 = word.split()
+                    if len(w3) > 1:
+                        for i in w3:
+                            print i,"w3"
+                            question_dict.add(i)
+
             if word not in question_dict:
                 question_dict.add(word)
     f = file(TOPICDICT,'w')
     for word in question_dict:
         f.write(word.encode('utf8')+'\n')
 
+def test():
+    my_dict = read_stopword()
+    print my_dict
 
-    
+
+def step1():
+    question_dict_gen()
+
+def step2():
+    '''
+    使用jieba进行切词。输出结果为
+    '''
 
 def main():
     print 'begin'
-    question_dict_gen()
     # with open('19605346.json') as f:
     #     print 'begin'
     #     for i in f.readlines():
