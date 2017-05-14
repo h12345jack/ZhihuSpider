@@ -41,3 +41,20 @@ STOPWORD = "./data/stopword.txt"
 QUESTION_TOPIC = './data/question/question_topic.txt'
 
 TOPICDICT = "./data/dict.txt"
+
+ANSWER_JSONLINE = './data/answers/zhihu_answer_clean.jl'
+
+# 有cutword的jl文件
+ANSWER_CUT_WORD_JSONLINE = './data/answers/zhihu_answer_cut_word.jl'
+
+ANSWERS_TXT_DATA_DIR = './cut_word_tools/answers_data'
+
+
+CUT_WORD_DIC = {
+  'jieba': './cut_word_tools/jieba_data',
+  'nlpir': './cut_word_tools/nlpir_data',
+  'thu': './cut_word_tools/thu_data',
+  'jieba_pos': './cut_word_tools/jieba_data_pos'
+}
+
+MIDDLE_DATA = './data/middle_data'

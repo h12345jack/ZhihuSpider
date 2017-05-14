@@ -41,9 +41,11 @@ def extract_content_info(content):
 
     return (real_content, img_num1, a_num1)
 
+
 def extract_topic_list(content):
     json_data = json.loads(str(content))
     return [i["name"] for i in json_data]
+
 
 def output_raw_question_data():
     '''
@@ -70,6 +72,7 @@ def output_raw_question_data():
             row[1].to_json(f)
             f.write('\n')
     print output_file, 'done'
+
 
 def output_clean_question_data():
     '''
@@ -104,6 +107,7 @@ def output_clean_question_data():
             f.write('\n')
     print output_file, 'done'
 
+
 def output_raw_answer_data():
    
     table_name = "zhihu_answer"
@@ -125,6 +129,7 @@ def output_raw_answer_data():
             row[1].to_json(f)
             f.write('\n')
     print 'df to jsonline done', output_file
+
 
 def output_clean_answer_data():
 
@@ -148,7 +153,6 @@ def output_clean_answer_data():
         json_data["answer_a_num"] = answer_a_num
         output_f.write(json.dumps(json_data)+"\n")
     print clean_data_path, 'done'
-
 
 
 def test():

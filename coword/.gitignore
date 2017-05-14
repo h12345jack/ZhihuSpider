@@ -1,6 +1,14 @@
+.DS_Store
 *.jl
 !example.jl
 *.txt
 *.xlsx
 *.sav
 *.pyc
+*.data
+*.log
+*.bin
+*.dat
+*.npy
+*.state
+./cut_word_tools/thulac

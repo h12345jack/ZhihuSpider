@@ -2,132 +2,30 @@
 
 import json
 import jieba
+import os
 import re
+import time
+import codecs
+from collections import defaultdict
+
 import lxml.html
 import jieba.analyse
-import codecs
-
-
-import pandas as pd
-from config.Config import QUESTION_DATA_DIR, ANSWER_DATA_DIR
-from config.Config import STOPWORD, TOPICDICT, QUESTION_TOPIC
 import MySQLdb
+import pandas as pd
+
+
+from config.Config import QUESTION_DATA_DIR, ANSWER_DATA_DIR, MIDDLE_DATA
+from config.Config import STOPWORD, TOPICDICT, QUESTION_TOPIC
+
+from config.Config import ANSWER_JSONLINE, ANSWERS_TXT_DATA_DIR
+
+from config.Config import CUT_WORD_DIC
+
 
 question_file = "zhihu_question.jl"
 
 answer_file = "zhihu_answer.jl"
 
-
-class Answer(object):
-    """docstring for Answer"""
-    
-    def _get_content(self,data):
-        content=''.join([i.strip() for i in data])
-        try:
-            etree=lxml.html.fromstring(content)
-            time=etree.xpath('//text()')
-        except Exception, e:
-            ttt.write(content.encode('utf8')+'\n')
-            return ''
-        return ''.join([i.strip() for i in time])
-    
-    def _get_num(self,data):
-        content=''.join([i.strip() for i in data])
-        try:
-            etree=lxml.html.fromstring(content)
-            time=etree.xpath('//a')
-            img=etree.xpath('//img')
-        except Exception, e:
-            return (0,0)
-        return len(time),len(img)
-    
-
-    def __init__(self, json_data):
-        super(Answer, self).__init__()
-        self.time = json_data['a_time']
-        self.a_agree_num = json_data["a_agree_num"]
-        self.a_qid = json_data["a_qid"]
-        self.a_comment_num = json_data["a_comment_num"]
-        self.a_thanks_num = json_data["a_thanks_num"]
-        self.user_name = json_data['a_user']
-
-        self.content=self._get_content(json_data['a_content'])
-
-        self.a_or_img_num=self._get_num(json_data['a_content'])
-
-        self.dict=word_cut(self.content)
-        
-        
-class Question(object):
-    """docstring for Question"""
-    def _get_the_num(self,data):
-        tmp=re.search('[0-9]+',data)
-        return tmp.group() if tmp else 0
-
-    def _get_topic(self,data):
-        rs=[]
-        for i in data:
-            etree=lxml.html.fromstring(i)
-            topic_id=etree.xpath('//a/@data-token')
-            topic_label=etree.xpath('//a/text()')
-            tmp=dict()
-            tmp['id']=topic_id
-            tmp['label']=''.join([j.strip() for j in topic_label]).encode('utf8')
-            rs.append(tmp)
-        return rs
-
-    def _get_the_des(self,data):
-        rs=''.join(data).encode('utf8')
-        return rs
-
-    def _get_a_list(self,data):
-        rs=[]
-        for i in data:
-            a=Answer(i)
-            rs.append(a)
-        return rs
-
-    def __init__(self, content):
-        json_data=json.loads(content)
-        self.q_view_num = self._get_the_num(json_data['q_view_num'])
-        self.q_follower_num=self._get_the_num(json_data['q_follower_num'])
-        self.q_related_topic_num=self._get_the_num(json_data['q_related_topic_num'])
-        self.q_url_id=self._get_the_num(json_data['q_url'])
-        self.q_topic=self._get_topic(json_data['q_topic'])
-        self.q_answer=self._get_the_num(json_data['q_answer_num'])
-        self.q_des=self._get_the_des(json_data['q_des'])
-        self.q_title=json_data['q_titile'].encode('utf8')
-        self.q_answer_list=self._get_a_list(json_data['q_answer_list'])
-        # f=file('lol_a1.txt','a')
-        # for a in self.q_answer_list:
-        #   f.write(self.q_url_id.encode('utf8')+','+a.time.encode('utf8')+','+str(len(a.content))\
-        #       +','+a.comment_num.encode('utf8')+','+a.agree_num.encode('utf8')+','+str(a.a_or_img_num[0])+','+str(a.a_or_img_num[1])+'\n')
-
-        # print self.q_url_id
-        # print len(self.q_answer_list)
-
-
-def read_stopword():
-    '''
-    读取停用词，返回一个集合
-    '''
-    stopword=set()
-    f=codecs.open(STOPWORD,'r','utf8')
-    for i in f.readlines():
-        stopword.add(i.strip().encode('utf8'))
-    return stopword
-
-
-
-def word_cut(sentence):
-    jieba.load_userdict(TOPICDICT)
-
-    seg_list=jieba.cut(sentence,cut_all=False)
-    tmp=[i.encode('utf8') for i in seg_list]
-    # print ','.join([i for i in tmp])
-    # print '-'*10
-    # print ','.join([i for i in tmp if i not in stopword])
-    return [i for i in tmp if i not in stopword]
 
 
 def question_dict_gen():
@@ -165,38 +63,106 @@ def question_dict_gen():
     for word in question_dict:
         f.write(word.encode('utf8')+'\n')
 
-def test():
-    my_dict = read_stopword()
-    print my_dict
+def question_dict_gen2():
+    '''
+    相比之间的函数，多了一个统计功能
+    '''
+    f = codecs.open(QUESTION_TOPIC, 'r', 'utf8')
+    question_dict = defaultdict(int)
+    for line in f.readlines():
+        word_list = line.strip().split(',')
+        for word in word_list:
+            # 优步（Uber）
+            w1 = re.findall(u"(.*)\s*（(.*)）",word)
+            if len(w1) > 0:
+                for i in w1[0]:
+                    question_dict[i] += 1
+            else:
+                w2 = re.findall(r'(.*)\s*\((.*)\)',word)
+                if len(w2) > 0: 
+                    for i in w2[0]:
+                        question_dict[i] += 1
+                else:
+                    w3 = word.split()
+                    if len(w3) > 1:
+                        for i in w3:
+                            question_dict[i] += 1
+            question_dict[word] += 1
+    f = file(TOPICDICT+'2','w')
+    item_list = sorted(question_dict.items(), key= lambda x:x[1], reverse=True)
+    for item in item_list:
+        f.write(item[0].encode('utf8')+','+str(item[1])+'\n')
+
 
 
 def step1():
     question_dict_gen()
+    question_dict_gen2()
+
 
 def step2():
     '''
-    使用jieba进行切词。输出结果为
+    将回答的内容导出到answers_data文件夹中，然后调用切词工具包即可
+    这个方法非常的慢！不要轻易尝试
+
     '''
+    a_id_duplicate = set()
+    i = 0
+    last_time = time.time()
+    with codecs.open(ANSWER_JSONLINE) as f:
+        for line in f.readlines():
+            i += 1
+            json_data = json.loads(line.strip())
+            a_id = json_data["a_id"]
+            # if a_id not in a_id_duplicate:
+            #     a_id_duplicate.add(a_id)
+            # else:
+            #     print a_id, 'duplicated!'
+
+            ## 写出文件
+            file_path = os.path.join(ANSWERS_TXT_DATA_DIR, a_id + '.txt')
+            with open(file_path, 'w') as output:
+                output.write(json_data["a_content"].encode("utf8"))
+            if i % 1000 ==0: 
+                print i, 'write 2 txt', "use", time.time() - last_time
+                last_time = time.time()
+
+def step3():
+    '''
+    统计各种切词工具的结果
+    '''
+    tools_dic = CUT_WORD_DIC
+    for tool_name in tools_dic:
+        print tool_name, 'stats'
+        data_dir = tools_dic[tool_name]
+        file_list = os.listdir(data_dir)
+        corpus=[]
+        stats=defaultdict(int)
+        for filename in file_list:
+            filename = os.path.join(data_dir,filename)
+            f=codecs.open(filename,'r','utf8')
+            for line in f.readlines():
+                word = line.strip()
+                stats[word] += 1
+
+        rs=sorted(stats.iteritems(), key=lambda x:x[1], reverse=True)
+        f2=file(os.path.join(MIDDLE_DATA, tool_name + '_word_stats.txt'), 'w')
+        num=0
+        for i in rs:
+            if i[1]==1:num+=1
+            f2.write(i[0].encode('utf8')+','+str(i[1])+'\n')
+
+        print tool_name,'all word:',len(rs), 'freq = 1:', num
+
+
+def test():
+    # stop_list = read_stopword()
+    step3()
 
 def main():
-    print 'begin'
-    # with open('19605346.json') as f:
-    #     print 'begin'
-    #     for i in f.readlines():
-    #         content=i.strip()
-    #         question=Question(content)
-    #         question_answer=[x.dict for x in question.q_answer_list]
-    #         all=[]
-    #         for j in question_answer:
-    #             all.extend(j)
-    #         print len(all)
-    #         with open(question.q_url_id+'.txt','w') as f:
-    #             for t in all:
-    #                 f.write(t+'\n')
-    #         # print question.q_url_id,len(question.q_title.decode('utf8')),len(question.q_des.decode('utf8')),\
-    #         # len(question.q_topic),question.q_view_num,question.q_follower_num,\
-    #         # question.q_related_topic_num,question.q_answer,len(question.q_answer_list)
-    #         # print [len(j.answer_term) for j in question.q_answer_list]
+    test()
     print 'end'
+
+
 if __name__ == '__main__':
     main()
