@@ -23,7 +23,8 @@ import numpy as np
 DATA_DIR = './cut_word_tools/answers_data'
 JIEBA_DIR = './cut_word_tools/jieba_data'
 JIEBA_POS_DIR = './cut_word_tools/jieba_data_pos'
-TEXT_RANK_DATA = './keyword_data/text_rank'
+TEXT_RANK_DATA = './keyword_data/text_rank' #'ns', 'n'
+TEXT_RANK_DATA2 = './keyword_data/text_rank2' # 'ns','nr','ng','nt','nz','n','x','v','vn','a','an', 'eng', 'i','j','l','s','t'
 USER_DICT = './cut_word_tools/user_dict.txt'
 STOP_WORD = './cut_word_tools/stop_word.txt'
 
@@ -81,6 +82,23 @@ def text_rank():
         rs_f = file(os.path.join(TEXT_RANK_DATA, filename), 'w')
         for x, w in jieba.analyse.textrank(s, withWeight=True, allowPOS=('ns', 'n')):
             print>> rs_f, x.encode('utf8'), ',', str(w)
+        
+
+
+def text_rank2():
+    '''遍历12w个文档，将结果输出来'''
+    # filename="100002481.txt"
+    jieba.load_userdict(USER_DICT)
+    jieba.analyse.set_stop_words(STOP_WORD)
+    print 'begin text_rank2'
+    f_list = os.listdir(DATA_DIR)
+    for filename in f_list:
+        f_path = os.path.join(DATA_DIR, filename)
+        f = codecs.open(f_path, 'r', 'utf8')
+        s = f.read().strip()
+        rs_f = file(os.path.join(TEXT_RANK_DATA2, filename), 'w')
+        for x, w in jieba.analyse.textrank(s, withWeight=True, allowPOS=( 'ns','nr','ng','nt','nz','n','x','v','vn','a','an', 'eng', 'i','j','l','s','t' )):
+            print>> rs_f, x.encode('utf8'), ',', str(w)
 
 
 def text_rank_top(topN=400):
@@ -103,11 +121,40 @@ def text_rank_top(topN=400):
     for i in rs2:
         print>>rs_f,i[0].encode("utf8")+","+str(i[1])
 
+def text_rank_top2(topN=400):
+    '''每个答案都记为1加权，遍历文档，如100002481.txt，计分求和'''
+    f_list = os.listdir(TEXT_RANK_DATA2)
+    # f_list=["100002481.txt"]
+    rs = defaultdict(float)
+    for filename in f_list:
+        f_path = os.path.join(TEXT_RANK_DATA2, filename)
+        f = codecs.open(f_path, 'r', 'utf8')
+        for line in f.readlines():
+            line = line.strip()
+            l_list = line.split(',')
+            if len(l_list) >= 2:
+                rs[l_list[0]] += float(l_list[1])
+    rs2 = sorted(rs.iteritems(), key=lambda x: x[1], reverse=True)
+    rs_topN = rs2[:topN]
+    rs_f =file('./keyword_data/text_rank2.txt','w')
+    for i in rs2:
+        print>>rs_f,i[0].encode("utf8")+","+str(i[1])
+
+
+
 def test_text_rank():
     print 'begin text rank'
     text_rank()
     print 'text_rank'
     text_rank_top(400)
+
+
+
+def test_text_rank2():
+    print 'begin text rank2'
+    text_rank2()
+    print 'text_rank2'
+    text_rank_top2(400)
 
 def test_LDA():
     print 'begin LDA models'
@@ -271,7 +318,7 @@ def tf_idf_count2():
 
 
 def main():
-    tf_idf_count2()
+    pass
 
 if __name__ == '__main__':
     main()

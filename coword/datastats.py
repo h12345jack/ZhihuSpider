@@ -155,6 +155,7 @@ def step3():
         print tool_name,'all word:',len(rs), 'freq = 1:', num
 
 
+
 def test():
     # stop_list = read_stopword()
     step3()

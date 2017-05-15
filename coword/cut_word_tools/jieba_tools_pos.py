@@ -23,7 +23,7 @@ for i in os.listdir(DATA_DIR):
     f2 = file(filename2,'w')
     seg_list = pseg.cut(content.encode('utf8'))
     tmp = [(w.encode("utf8"), flag) for w,flag in seg_list if w.strip()]
-    content = "\n".join([w+'_'+flag.encode("utf8") for w,flag in tmp if w not in stop_word])
+    content = "\n".join([w+','+flag.encode("utf8") for w,flag in tmp if w not in stop_word])
     f2.write(content)
     print i
    
