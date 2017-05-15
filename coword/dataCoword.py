@@ -81,6 +81,9 @@ def get_cooccur1(j1,j2,file_dic):
 
 def get_matrix2():
 
+    '''
+    共回答
+    '''
     dic = list(get_dictionary())
     print len(dic)
 
@@ -89,7 +92,7 @@ def get_matrix2():
 
     for filename in os.listdir(question_dir):
         filename = os.path.join(question_dir, filename)
-        file_dic = get_filedic2(filename)
+        file_dic_list = get_filedic2(filename)
 
         for j1 in dic:
             for j2 in dic:
@@ -97,7 +100,7 @@ def get_matrix2():
                     mat[j1] = dict()
                 if j2 not in mat[j1]:
                     mat[j1][j2] = 0
-                count_v = get_cooccur2(j1, j2, file_dic)
+                count_v = get_cooccur2(j1, j2, file_dic_list)
                 # if count_v > 0:
                 #     print filename, j1,j2, count_v
                 mat[j1][j2] += count_v
@@ -107,13 +110,15 @@ def get_matrix2():
     return mat
 
 def get_matrix1():
-
+    '''
+    共问题
+    '''
     dic = list(get_dictionary())
     print len(dic)
 
     mat = dict()
     question_dir = JIEBA_DIR
-
+    tmp_f = file('matrix1_tmp.txt','w')
     for filename in os.listdir(question_dir):
         filename = os.path.join(question_dir, filename)
         file_dic = get_filedic1(filename)
@@ -125,10 +130,12 @@ def get_matrix1():
                 if j2 not in mat[j1]:
                     mat[j1][j2] = 0
                 count_v = get_cooccur1(j1, j2, file_dic)
-                # if count_v > 0:
-                #     print filename, j1,j2, count_v
+                if count_v > 0:
+                    print>>tmp_f, filename[filename.rfind("/"):], j1, j2, count_v
                 mat[j1][j2] += count_v
         print filename
+        print>>tmp_f, '='*10
+
         # break
     return mat
 
@@ -174,7 +181,7 @@ def test():
         print w,rs2[w]
 
 def main():
-    output_mat2()
+    output_mat1()
 
 if __name__ == '__main__':
     main()
